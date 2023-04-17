@@ -1,1 +1,1 @@
-# wp-rss-feed
+# wp-custom-rss-feed
