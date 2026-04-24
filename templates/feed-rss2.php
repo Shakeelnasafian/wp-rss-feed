@@ -4,9 +4,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-global $wcrss_feed_context;
-$settings = isset( $wcrss_feed_context['settings'] ) ? $wcrss_feed_context['settings'] : array();
-$query    = isset( $wcrss_feed_context['query'] ) ? $wcrss_feed_context['query'] : null;
+/**
+ * @var array $args Passed via load_template() with settings + query.
+ */
+$settings = isset( $args['settings'] ) ? $args['settings'] : array();
+$query    = isset( $args['query'] ) ? $args['query'] : null;
 
 if ( ! $query instanceof WP_Query ) {
 	return;
@@ -21,6 +23,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) )
 	xmlns:atom="http://www.w3.org/2005/Atom"
 	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
 	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	xmlns:media="http://search.yahoo.com/mrss/"
 	<?php do_action( 'rss2_ns' ); ?>>
 <channel>
 	<title><?php bloginfo_rss( 'name' ); ?> - <?php esc_html_e( 'Feed', 'wp-custom-rss-feed' ); ?></title>
@@ -36,6 +39,12 @@ echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) )
 	<?php
 	while ( $query->have_posts() ) :
 		$query->the_post();
+
+		$thumb_url = '';
+		if ( ! empty( $settings['include_thumb'] ) && has_post_thumbnail() ) {
+			$thumb_url = get_the_post_thumbnail_url( get_the_ID(), 'large' );
+		}
+
 		$item = array(
 			'title'           => get_the_title(),
 			'link'            => get_permalink(),
@@ -45,9 +54,12 @@ echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) )
 			'excerpt'         => apply_filters( 'the_excerpt_rss', get_the_excerpt() ),
 			'content'         => get_the_content_feed( 'rss2' ),
 			'categories'      => wp_get_post_categories( get_the_ID(), array( 'fields' => 'names' ) ),
+			'thumbnail'       => $thumb_url,
 		);
 
 		$item = apply_filters( 'wcrss_feed_item', $item, get_the_ID(), $settings );
+
+		$description_text = wp_strip_all_tags( (string) $item['excerpt'], true );
 		?>
 		<item>
 			<title><?php echo esc_html( $item['title'] ); ?></title>
@@ -55,9 +67,12 @@ echo '<?xml version="1.0" encoding="' . esc_attr( get_option( 'blog_charset' ) )
 			<pubDate><?php echo esc_html( $item['pub_date_rfc822'] ); ?></pubDate>
 			<dc:creator><![CDATA[<?php echo esc_html( $item['creator'] ); ?>]]></dc:creator>
 			<guid isPermaLink="false"><?php echo esc_html( $item['guid'] ); ?></guid>
-			<description><![CDATA[<?php echo wp_kses_post( $item['excerpt'] ); ?>]]></description>
+			<description><![CDATA[<?php echo esc_html( $description_text ); ?>]]></description>
 			<?php if ( ! empty( $settings['full_content'] ) ) : ?>
 				<content:encoded><![CDATA[<?php echo wp_kses_post( $item['content'] ); ?>]]></content:encoded>
+			<?php endif; ?>
+			<?php if ( ! empty( $item['thumbnail'] ) ) : ?>
+				<media:thumbnail url="<?php echo esc_url( $item['thumbnail'] ); ?>" />
 			<?php endif; ?>
 			<?php if ( ! empty( $item['categories'] ) && is_array( $item['categories'] ) ) : ?>
 				<?php foreach ( $item['categories'] as $category_name ) : ?>

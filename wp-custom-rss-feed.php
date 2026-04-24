@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: WP Custom RSS Feed
- * Description: Adds a configurable custom RSS2 feed endpoint with caching and feed settings.
- * Version: 1.1.0
+ * Description: Adds a configurable custom RSS2 feed endpoint with caching, taxonomy filters, featured images, and HTTP cache headers.
+ * Version: 1.2.0
  * Author: Shakeel Ahmad
  * License: GPL-2.0-or-later
  * Text Domain: wp-custom-rss-feed
@@ -16,10 +16,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-wcrss-settings.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-wcrss-feed.php';
-require_once plugin_dir_path( __FILE__ ) . 'includes/class-wcrss-plugin.php';
+define( 'WCRSS_PLUGIN_FILE', __FILE__ );
+define( 'WCRSS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'WCRSS_PLUGIN_VERSION', '1.2.0' );
 
+require_once WCRSS_PLUGIN_DIR . 'includes/class-wcrss-settings.php';
+require_once WCRSS_PLUGIN_DIR . 'includes/class-wcrss-feed.php';
+require_once WCRSS_PLUGIN_DIR . 'includes/class-wcrss-plugin.php';
+
+/**
+ * Retrieve the plugin singleton.
+ *
+ * @return WCRSS_Plugin
+ */
 function wcrss_plugin() {
 	return WCRSS_Plugin::instance();
 }
